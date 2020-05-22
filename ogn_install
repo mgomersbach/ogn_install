@@ -40,7 +40,9 @@ OGN_LONGITUDE="${OGN_LONGITUDE:-"+5.123456"}"
 OGN_ALTITUDE="${OGN_ALTITUDE:-"5"}"
 OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
 OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
+OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
 
+SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
 DEBUG="${DEBUG:-}"
@@ -307,9 +309,9 @@ EOF
 create_ogn_rf_cron() {
   if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_rf <<EOF
-#!/usr/bin/env bash
+# RF cronjob for ${OGN_CALLSIGN}
 
-if [ \$(pgrep ogn-rf | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-rf ${OGN_CALLSIGN} works"; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi >> /var/log/ogn/rf.log 2>&1
+${OGN_CRON} if [ \$(pgrep ogn-rf | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-rf ${OGN_CALLSIGN} works"; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi >> /var/log/ogn/rf.log 2>&1
 EOF
     chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_rf
     if [ ! -f /var/log/ogn/rf.log ]; then
@@ -324,9 +326,9 @@ EOF
 create_ogn_decode_cron() {
   if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_decode <<EOF
-#!/usr/bin/env bash
+# Decode cronjob for ${OGN_CALLSIGN}
 
-if [ \$(pgrep ogn-decode | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-decode ${OGN_CALLSIGN} works"; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi >> /var/log/ogn/decode.log 2>&1
+${OGN_CRON} if [ \$(pgrep ogn-decode | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-decode ${OGN_CALLSIGN} works"; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi >> /var/log/ogn/decode.log 2>&1
 EOF
     chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_decode
     if [ ! -f /var/log/ogn/decode.log ]; then
