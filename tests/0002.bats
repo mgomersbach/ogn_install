@@ -19,7 +19,7 @@ setup() {
 }
 
 @test "Created GPU device node" {
-  [ -c "gpu_dev" ]
+  [ -c "/dev/gpu_dev" ]
 }
 
 @test "Created OGN config template" {

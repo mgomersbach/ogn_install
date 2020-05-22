@@ -239,11 +239,11 @@ create_ogn_fifo() {
 }
 
 create_gpu_dev() {
-  if [[ ! -c "gpu_dev" ]]; then
+  if [[ ! -c "/dev/gpu_dev" ]]; then
     if [[ ${KERNEL_VERSION} -lt "41" ]]; then
-      mknod gpu_dev c 100 0
+      mknod /dev/gpu_dev c 100 0
     else
-      mknod gpu_dev c 249 0
+      mknod /dev/gpu_dev c 249 0
     fi
   else
     notice "/dev/gpu_dev found, skipping ${FUNCNAME[0]}"
