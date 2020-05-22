@@ -351,6 +351,7 @@ install_dump1090_fa() {
     dpkg -i /tmp/piaware-repository_3.5.1_all.deb
     apt update
     apt upgrade piaware-repository -y
+    apt update
     apt install dump1090-fa -y
     rm /tmp/piaware-repository_3.5.1_all.deb
   else
@@ -360,7 +361,6 @@ install_dump1090_fa() {
 
 install_fr24_feed() {
   if ! grep -q flightradar24 /etc/apt/sources.list; then
-    apt install dirmngr -y
     apt-key adv --recv-key --keyserver pool.sks-keyservers.net C969F07840C430F5 || apt-key adv --recv-key --keyserver pgp.mit.edu C969F07840C430F5
     mv /etc/apt/sources.list /etc/apt/sources.list.bak
     grep -v flightradar24 /etc/apt/sources.list.bak >/etc/apt/sources.list || true
@@ -385,7 +385,7 @@ main() {
   create_ogn_decode_cron
   install_dump1090_fa
   install_fr24_feed
-  # install_fr24_svc
+  # setup_fr24_svc
 }
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then
