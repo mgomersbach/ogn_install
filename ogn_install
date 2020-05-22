@@ -279,7 +279,7 @@ EOF
 create_ogn_rf_script() {
   if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf ]; then
     cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf <<EOF
-#!/bin/bash
+#!/usr/bin/env bash
 
 cd /opt/rtlsdr-ogn
 /opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
@@ -293,7 +293,7 @@ EOF
 create_ogn_decode_script() {
   if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode ]; then
     cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode <<EOF
-#!/bin/bash
+#!/usr/bin/env bash
 
 cd /opt/rtlsdr-ogn
 /opt/rtlsdr-ogn/ogn-decode /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
@@ -307,9 +307,9 @@ EOF
 create_ogn_rf_cron() {
   if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_rf <<EOF
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [ $(pgrep ogn-rf | tr '\n' ' ' | awk '{print $1}') ]; then echo "ogn-rf ${OGN_CALLSIGN} works"; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi > /var/log/ogn/rf.log 2>&1
+if [ \$(pgrep ogn-rf | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-rf ${OGN_CALLSIGN} works"; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi >> /var/log/ogn/rf.log 2>&1
 EOF
     chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_rf
     if [ ! -f /var/log/ogn/rf.log ]; then
@@ -324,9 +324,9 @@ EOF
 create_ogn_decode_cron() {
   if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_decode <<EOF
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [ $(pgrep ogn-decode | tr '\n' ' ' | awk '{print $1}') ]; then echo "ogn-decode ${OGN_CALLSIGN} works"; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi > /var/log/ogn/decode.log 2>&1
+if [ \$(pgrep ogn-decode | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +"%Y-%m-%d %H:%M:%S UTC") ogn-decode ${OGN_CALLSIGN} works"; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi >> /var/log/ogn/decode.log 2>&1
 EOF
     chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_decode
     if [ ! -f /var/log/ogn/decode.log ]; then
