@@ -10,10 +10,6 @@ setup() {
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
 
-@test "Installed dump1090-fa pkgs" {
-  [[ $(command -v dump1090-fa) ]]
-}
-
 @test "Installed OGN pkgs" {
   [ -L "/opt/rtlsdr-ogn" ]
 }
@@ -52,6 +48,14 @@ setup() {
 
 @test "Created OGN decode log" {
   [ -f /var/log/ogn/decode.log ]
+}
+
+@test "Installed dump1090-fa pkgs" {
+  [[ $(command -v dump1090-fa) ]]
+}
+
+@test "Installed FlightRadar24 repo" {
+  [ grep -q flightradar24 /etc/apt/sources.list ]
 }
 
 @test "Downloaded OGN tarball is absent" {

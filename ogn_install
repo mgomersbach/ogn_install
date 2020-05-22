@@ -346,7 +346,7 @@ EOF
 }
 
 install_dump1090_fa() {
-  if [[ $(command -v dump1090-fa) ]]; then
+  if ! command -v dump1090-fa; then
     wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.5.1_all.deb -O /tmp/piaware-repository_3.5.1_all.deb
     dpkg -i /tmp/piaware-repository_3.5.1_all.deb
     apt update
@@ -355,6 +355,20 @@ install_dump1090_fa() {
     rm /tmp/piaware-repository_3.5.1_all.deb
   else
     notice "dump1090-fa already installed, skipping ${FUNCNAME[0]}"
+  fi
+}
+
+install_fr24_feed() {
+  if ! grep -q flightradar24 /etc/apt/sources.list; then
+    apt install dirmngr -y
+    apt-key adv --recv-key --keyserver pool.sks-keyservers.net C969F07840C430F5 || apt-key adv --recv-key --keyserver pgp.mit.edu C969F07840C430F5
+    mv /etc/apt/sources.list /etc/apt/sources.list.bak
+    grep -v flightradar24 /etc/apt/sources.list.bak >/etc/apt/sources.list || true
+    echo 'deb http://repo.feed.flightradar24.com flightradar24 raspberrypi-stable' >>/etc/apt/sources.list
+    apt update -y
+    apt install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y fr24feed
+  else
+    notice "flightradar24 feed already installed, skipping ${FUNCNAME[0]}"
   fi
 }
 
@@ -370,7 +384,7 @@ main() {
   create_ogn_rf_cron
   create_ogn_decode_cron
   install_dump1090_fa
-  # install_fr24_pkgs
+  install_fr24_feed
   # install_fr24_svc
 }
 
