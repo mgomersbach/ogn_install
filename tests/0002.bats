@@ -10,6 +10,10 @@ setup() {
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
 
+@test "Installed dump1090-fa pkgs" {
+  [[ $(command -v dump1090-fa) ]]
+}
+
 @test "Installed OGN pkgs" {
   [ -L "/opt/rtlsdr-ogn" ]
 }
@@ -48,4 +52,12 @@ setup() {
 
 @test "Created OGN decode log" {
   [ -f /var/log/ogn/decode.log ]
+}
+
+@test "Downloaded OGN tarball is absent" {
+  [ ! -f /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz ]
+}
+
+@test "Downloaded piaware dpkg is absent" {
+  [ ! -f /tmp/piaware-repository_3.5.1_all.deb ]
 }

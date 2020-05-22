@@ -225,6 +225,7 @@ install_ogn_pkgs() {
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
     wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
     tar xvzf /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -C /opt
+    rm /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
   else
     notice "/opt/rtlsdr-ogn link found, skipping ${FUNCNAME[0]}"
   fi
@@ -344,6 +345,19 @@ EOF
   fi
 }
 
+install_dump1090_fa() {
+  if [[ $(command -v dump1090-fa) ]]; then
+    wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.5.1_all.deb -O /tmp/piaware-repository_3.5.1_all.deb
+    dpkg -i /tmp/piaware-repository_3.5.1_all.deb
+    apt update
+    apt upgrade piaware-repository -y
+    apt install dump1090-fa -y
+    rm /tmp/piaware-repository_3.5.1_all.deb
+  else
+    notice "dump1090-fa already installed, skipping ${FUNCNAME[0]}"
+  fi
+}
+
 main() {
   update_system_pkgs
   blacklist_dvbt_modules
@@ -355,6 +369,7 @@ main() {
   create_ogn_decode_script
   create_ogn_rf_cron
   create_ogn_decode_cron
+  install_dump1090_fa
   # install_fr24_pkgs
   # install_fr24_svc
 }
