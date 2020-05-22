@@ -36,6 +36,9 @@ DEBUG="${DEBUG:-}"
 VERBOSE="${VERBOSE:-}"
 help="false"
 
+KERNEL=$(uname -r)
+KERNEL_VERSION=$(echo "${KERNEL}" | cut -d \. -f 1)$(echo "${KERNEL}" | cut -d \. -f 2)
+
 function __log() {
   local log_level="${1}"
   shift
@@ -220,7 +223,11 @@ create_ogn_fifo() {
 
 create_gpu_dev() {
   if [[ ! -c "/dev/gpu_dev" ]]; then
-    mknod /dev/gpu_dev c 100 0
+    if [[ ${KERNEL_VERSION} -lt "41" ]]; then
+      mknod /dev/gpu_dev c 100 0
+    else
+      mknod gpu_dev c 249 0
+    fi
   else
     notice "/dev/gpu_dev found, skipping ${FUNCNAME[0]}"
   fi
