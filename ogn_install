@@ -30,7 +30,7 @@ set -o errtrace
 set -o nounset
 set -o pipefail
 
-# Vars for OGN
+# Default vars for OGN
 OGN_USER="${OGN_USER:-"ognuser"}"
 OGN_FREQCORR="${OGN_FREQCORR:-"+12.345"}"
 OGN_GSMCENTERFREQ="${OGN_GSMCENTERFREQ:-"937.4"}"
@@ -42,6 +42,8 @@ OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
 OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
 OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
 
+# Default vars for this script
+CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
 SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
@@ -223,9 +225,23 @@ install_ogn_pkgs() {
   if [[ ! -L "/opt/rtlsdr-ogn" ]]; then
     apt-get install rtl-sdr -y
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
-    wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
-    tar xvzf /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -C /opt
-    rm /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
+    if vcgencmd measure_temp; then
+      wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
+    else
+      case ${CPU_ARCHITECTURE} in
+        "armv[6-7]l")
+          wget http://download.glidernet.org/arm/rtlsdr-ogn-bin-ARM-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
+          ;;
+        "x86_64")
+          wget http://download.glidernet.org/x64/rtlsdr-ogn-bin-x64-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
+          ;;
+        *)
+          wget http://download.glidernet.org/x86/rtlsdr-ogn-bin-x86-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
+          ;;
+      esac
+    fi
+    tar xvzf /tmp/rtlsdr-ogn-bin.tgz -C /opt
+    rm /tmp/rtlsdr-ogn-bin.tgz
   else
     notice "/opt/rtlsdr-ogn link found, skipping ${FUNCNAME[0]}"
   fi
@@ -347,13 +363,40 @@ EOF
 
 install_dump1090_fa() {
   if ! command -v dump1090-fa; then
-    wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.5.1_all.deb -O /tmp/piaware-repository_3.5.1_all.deb
-    dpkg -i /tmp/piaware-repository_3.5.1_all.deb
-    apt update
-    apt upgrade piaware-repository -y
-    apt update
-    apt install dump1090-fa -y
-    rm /tmp/piaware-repository_3.5.1_all.deb
+    if vcgencmd measure_temp; then
+      wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.8.1_all.deb -O /tmp/piaware-repository_3.8.1_all.deb
+      dpkg -i /tmp/piaware-repository_3.8.1_all.deb
+      apt update
+      apt upgrade piaware-repository -y
+      apt update
+      apt install dump1090-fa -y
+      rm /tmp/piaware-repository_3.8.1_all.deb
+    else
+      apt install libncurses5-dev lighttpd git
+      git clone https://github.com/flightaware/dump1090 /tmp/dump1090
+      cd /tmp/dump1090
+      sed -i 's/BLADERF=yes/BLADERF=no/' debian/rules
+      sed -i 's/, libbladerf-dev//' debian/control
+      sed -i 's/libbladerf1 (>= 0.2016.06), //' debian/control
+      dpkg-buildpackage -b --no-sign
+      cd ../
+      case ${CPU_ARCHITECTURE} in
+        "armv[6-7]l")
+          dpkg -i dump1090-fa_3.8.1_arm.deb
+          ;;
+        "arm64")
+          dpkg -i dump1090-fa_3.8.1_arm64.deb
+          ;;
+        "x86_64")
+          dpkg -i dump1090-fa_3.8.1_amd64.deb
+          ;;
+        *)
+          dpkg -i dump1090-fa_3.8.1_x86.deb
+          ;;
+      esac
+      popd >/dev/null 2>&1
+      popd >/dev/null 2>&1
+    fi
   else
     notice "dump1090-fa already installed, skipping ${FUNCNAME[0]}"
   fi
