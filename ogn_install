@@ -175,9 +175,23 @@ update_system_pkgs() {
   apt update && apt upgrade -y
 }
 
+blacklist_dvbt_modules() {
+  cat > /etc/modprobe/blacklist-dvbt.conf << EOF
+blacklist rtl8192cu
+blacklist rtl8xxxu
+blacklist dvb_usb_rtl28xxu
+blacklist e4000
+blacklist rtl2832
+blacklist r820t
+blacklist rtl2830
+blacklist dvb_usb_rtl28xxu
+blacklist dvb_usb_rtl2832u
+EOF
+}
+
 main() {
   update_system_pkgs
-  # blacklist_dvbt_modules
+  blacklist_dvbt_modules
   # install_ogn_pkgs
   # create_ogn_fifo
   # create_gpu_dev
