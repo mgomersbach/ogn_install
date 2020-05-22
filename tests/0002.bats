@@ -3,7 +3,7 @@
 load test_helper
 
 @test "Create /etc/modprobe.d/blacklist-dvbt.conf" {
-  run sudo ogn_install -vn
+  run ogn_install -vn
   [ "$status" -eq 0 ]
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
