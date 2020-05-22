@@ -194,7 +194,11 @@ if [[ ${DEBUG} == "true" ]]; then
 fi
 
 update_system_pkgs() {
-  apt update && apt upgrade -y
+  if [ -z "$SYSTEM_UPDATE" ]; then
+    apt update && apt upgrade -y
+  else
+    notice "System updates not set, skipping ${FUNCNAME[0]}"
+  fi
 }
 
 blacklist_dvbt_modules() {
