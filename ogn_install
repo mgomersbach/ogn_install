@@ -211,9 +211,10 @@ install_ogn_pkgs() {
 }
 
 create_ogn_fifo() {
-  if [[ ! -p "ogn-rf.fifo" ]]; then
-    echo -e "\e[94m  Creating named pipe...\e[97m"
-    sudo mkfifo ogn-rf.fifo
+  if [[ ! -p "/opt/rtlsdr-ogn/ogn-rf.fifo" ]]; then
+    sudo mkfifo /opt/rtlsdr-ogn/ogn-rf.fifo
+  else
+    notice "/opt/rtlsdr-ogn/ogn-rf.fifo found, skipping ${FUNCNAME[0]}"
   fi
 }
 
@@ -221,7 +222,7 @@ main() {
   update_system_pkgs
   blacklist_dvbt_modules
   install_ogn_pkgs
-  # create_ogn_fifo
+  create_ogn_fifo
   # create_gpu_dev
   # create_ogn_template
   # create_ogn_rf_script
