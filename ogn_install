@@ -176,7 +176,7 @@ update_system_pkgs() {
 }
 
 blacklist_dvbt_modules() {
-  cat > /etc/modprobe/blacklist-dvbt.conf << EOF
+  cat >/etc/modprobe.d/blacklist-dvbt.conf <<EOF
 blacklist rtl8192cu
 blacklist rtl8xxxu
 blacklist dvb_usb_rtl28xxu
