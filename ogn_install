@@ -44,6 +44,7 @@ OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
 
 # Default vars for this script
 CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
+REAL_PI="command -v vcgencmd && vcgencmd measure_temp"
 SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
@@ -228,7 +229,7 @@ install_ogn_pkgs() {
   if [[ ! -L "/opt/rtlsdr-ogn" ]] || [ ${DESTRUCTIVE} ]; then
     apt-get install rtl-sdr -y
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
-    if vcgencmd measure_temp; then
+    if [[ ${REAL_PI} -gt 0 ]]; then
       wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
     else
       case ${CPU_ARCHITECTURE} in
@@ -366,7 +367,7 @@ EOF
 
 install_dump1090_fa() {
   if ! command -v dump1090-fa || [ ${DESTRUCTIVE} ]; then
-    if vcgencmd measure_temp; then
+    if [[ ${REAL_PI} -gt 0 ]]; then
       wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.8.1_all.deb -O /tmp/piaware-repository_3.8.1_all.deb
       dpkg -i /tmp/piaware-repository_3.8.1_all.deb
       apt update
@@ -375,7 +376,7 @@ install_dump1090_fa() {
       apt install dump1090-fa -y
       rm /tmp/piaware-repository_3.8.1_all.deb
     else
-      apt install libncurses5-dev lighttpd git
+      apt install libncurses5-dev lighttpd git librtlsdr-dev debhelper libusb-1.0-0-dev dh-systemd -y
       git clone https://github.com/flightaware/dump1090 /tmp/dump1090
       cd /tmp/dump1090
       sed -i 's/BLADERF=yes/BLADERF=no/' debian/rules
