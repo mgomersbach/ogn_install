@@ -176,7 +176,8 @@ update_system_pkgs() {
 }
 
 blacklist_dvbt_modules() {
-  cat >/etc/modprobe.d/blacklist-dvbt.conf <<EOF
+  if [ ! -L /opt/rtlsdr-ogn ]; then
+    cat >/etc/modprobe.d/blacklist-dvbt.conf <<EOF
 blacklist rtl8192cu
 blacklist rtl8xxxu
 blacklist dvb_usb_rtl28xxu
@@ -187,12 +188,27 @@ blacklist rtl2830
 blacklist dvb_usb_rtl28xxu
 blacklist dvb_usb_rtl2832u
 EOF
+  else
+    notice "DVB-T Blacklist found, skipping ${FUNCNAME[0]}"
+  fi
+}
+
+install_ogn_pkgs() {
+  if [ ! -L /opt/rtlsdr-ogn ]; then
+    apt-get install rtl-sdr -y
+    apt-get install install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp -y
+    wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
+    tar xvzf /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -C /opt
+    ln -s /opt/rtlsdr-ogn-0.2.6 /opt/rtlsdr-ogn
+  else
+    notice "/opt/rtlsdr-ogn link found, skipping ${FUNCNAME[0]}"
+  fi
 }
 
 main() {
   update_system_pkgs
   blacklist_dvbt_modules
-  # install_ogn_pkgs
+  install_ogn_pkgs
   # create_ogn_fifo
   # create_gpu_dev
   # create_ogn_template
