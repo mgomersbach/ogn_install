@@ -158,6 +158,12 @@ if [[ ${help} == "true" ]]; then
   exit 1
 fi
 
+# Can only be run as root user
+if [ "$(whoami)" != 'root' ]; then
+  error "$(basename "$0"): must be root."
+  exit 1
+fi
+
 # Verbose mode
 if [[ ${VERBOSE} == "true" ]]; then
   set -o verbose
