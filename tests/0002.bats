@@ -55,7 +55,8 @@ setup() {
 }
 
 @test "Installed FlightRadar24 repo" {
-  [ grep -q flightradar24 /etc/apt/sources.list ]
+  run grep -q flightradar24 /etc/apt/sources.list
+  [ "$status" -eq 0 ]
 }
 
 @test "Downloaded OGN tarball is absent" {
