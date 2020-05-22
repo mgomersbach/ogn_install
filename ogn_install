@@ -44,7 +44,7 @@ OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
 
 # Default vars for this script
 CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
-REAL_PI="command -v vcgencmd && vcgencmd measure_temp"
+REAL_PI=$(command -v vcgencmd && vcgencmd measure_temp)
 SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
