@@ -7,7 +7,6 @@ setup() {
 }
 
 @test "Created /etc/modprobe.d/blacklist-dvbt.conf" {
-  run ogn_installl
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
 
@@ -20,9 +19,13 @@ setup() {
 }
 
 @test "Created GPU device node" {
-  [ -c "/dev/gpu_dev" ]
+  [ -c "gpu_dev" ]
 }
 
 @test "Created OGN config template" {
+  [ -f /opt/rtlsdr-ogn/testcallsign.conf ]
+}
+
+@test "Created OGN rf script" {
   [ -f /opt/rtlsdr-ogn/testcallsign.conf ]
 }

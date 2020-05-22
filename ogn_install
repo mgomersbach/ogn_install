@@ -233,7 +233,7 @@ create_ogn_fifo() {
 }
 
 create_gpu_dev() {
-  if [[ ! -c "/dev/gpu_dev" ]]; then
+  if [[ ! -c "gpu_dev" ]]; then
     if [[ ${KERNEL_VERSION} -lt "41" ]]; then
       mknod gpu_dev c 100 0
     else
@@ -276,6 +276,20 @@ EOF
   fi
 }
 
+create_ogn_rf_script() {
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf ]; then
+    cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf <<EOF
+#!/bin/bash
+
+cd /opt/rtlsdr-ogn
+/opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
+EOF
+  chmod +x /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf
+  else
+    notice "OGN rf script found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
+  fi
+}
+
 main() {
   update_system_pkgs
   blacklist_dvbt_modules
@@ -283,7 +297,7 @@ main() {
   create_ogn_fifo
   create_gpu_dev
   create_ogn_template
-  # create_ogn_rf_script
+  create_ogn_rf_script
   # create_ogn_decode_script
   # create_ogn_rf_cron
   # create_ogn_decode_cron
