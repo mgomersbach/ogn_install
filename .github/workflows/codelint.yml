@@ -43,4 +43,4 @@ jobs:
         uses: actions/checkout@v1
 
       - name: 'Run BATS tests'
-        run: bats -r tests
+        run: sudo bats -r tests

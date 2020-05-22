@@ -205,9 +205,15 @@ install_ogn_pkgs() {
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp -y
     wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
     tar xvzf /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -C /opt
-    ln -s /opt/rtlsdr-ogn-0.2.6 /opt/rtlsdr-ogn
   else
     notice "/opt/rtlsdr-ogn link found, skipping ${FUNCNAME[0]}"
+  fi
+}
+
+create_ogn_fifo() {
+  if [[ ! -p "ogn-rf.fifo" ]]; then
+    echo -e "\e[94m  Creating named pipe...\e[97m"
+    sudo mkfifo ogn-rf.fifo
   fi
 }
 
