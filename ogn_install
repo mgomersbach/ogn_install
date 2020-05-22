@@ -216,7 +216,7 @@ EOF
 install_ogn_pkgs() {
   if [[ ! -L "/opt/rtlsdr-ogn" ]]; then
     apt-get install rtl-sdr -y
-    apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp -y
+    apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
     wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
     tar xvzf /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -C /opt
   else
@@ -284,9 +284,57 @@ create_ogn_rf_script() {
 cd /opt/rtlsdr-ogn
 /opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
 EOF
-  chmod +x /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf
+    chmod +x /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf
   else
     notice "OGN rf script found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
+  fi
+}
+
+create_ogn_decode_script() {
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode ]; then
+    cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode <<EOF
+#!/bin/bash
+
+cd /opt/rtlsdr-ogn
+/opt/rtlsdr-ogn/ogn-decode /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
+EOF
+    chmod +x /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode
+  else
+    notice "OGN decode script found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
+  fi
+}
+
+create_ogn_rf_cron() {
+  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ]; then
+    cat >/etc/cron.d/"${OGN_CALLSIGN}"_rf <<EOF
+#!/bin/bash
+
+if [ $(pgrep ogn-rf | tr '\n' ' ' | awk '{print $1}') ]; then echo "ogn-rf ${OGN_CALLSIGN} works"; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi > /var/log/ogn/rf.log 2>&1
+EOF
+    chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_rf
+    if [ ! -f /var/log/ogn/rf.log ]; then
+      mkdir -p "$(dirname "/var/log/ogn/rf.log")" || true
+      touch /var/log/ogn/rf.log || critical "Could not create rf log"
+    fi
+  else
+    notice "OGN rf cron found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
+  fi
+}
+
+create_ogn_decode_cron() {
+  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ]; then
+    cat >/etc/cron.d/"${OGN_CALLSIGN}"_decode <<EOF
+#!/bin/bash
+
+if [ $(pgrep ogn-decode | tr '\n' ' ' | awk '{print $1}') ]; then echo "ogn-decode ${OGN_CALLSIGN} works"; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi > /var/log/ogn/decode.log 2>&1
+EOF
+    chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_decode
+    if [ ! -f /var/log/ogn/decode.log ]; then
+      mkdir -p "$(dirname "/var/log/ogn/decode.log")" || true
+      touch /var/log/ogn/decode.log || critical "Could not create decode log"
+    fi
+  else
+    notice "OGN decode cron found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
   fi
 }
 
@@ -298,9 +346,9 @@ main() {
   create_gpu_dev
   create_ogn_template
   create_ogn_rf_script
-  # create_ogn_decode_script
-  # create_ogn_rf_cron
-  # create_ogn_decode_cron
+  create_ogn_decode_script
+  create_ogn_rf_cron
+  create_ogn_decode_cron
   # install_fr24_pkgs
   # install_fr24_svc
 }
