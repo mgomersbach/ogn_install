@@ -30,6 +30,17 @@ set -o errtrace
 set -o nounset
 set -o pipefail
 
+# Vars for OGN
+OGN_USER="${OGN_USER:-"ognuser"}"
+OGN_FREQCORR="${OGN_FREQCORR:-"+12.345"}"
+OGN_GSMCENTERFREQ="${OGN_GSMCENTERFREQ:-"937.4"}"
+OGN_GSMGAIN="${OGN_GSMGAIN:-"30.0"}"
+OGN_LATITUDE="${OGN_LATITUDE:-"+50.123456"}"
+OGN_LONGITUDE="${OGN_LONGITUDE:-"+5.123456"}"
+OGN_ALTITUDE="${OGN_ALTITUDE:-"5"}"
+OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
+OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
+
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
 DEBUG="${DEBUG:-}"
@@ -224,12 +235,44 @@ create_ogn_fifo() {
 create_gpu_dev() {
   if [[ ! -c "/dev/gpu_dev" ]]; then
     if [[ ${KERNEL_VERSION} -lt "41" ]]; then
-      mknod /dev/gpu_dev c 100 0
+      mknod gpu_dev c 100 0
     else
       mknod gpu_dev c 249 0
     fi
   else
     notice "/dev/gpu_dev found, skipping ${FUNCNAME[0]}"
+  fi
+}
+
+create_ogn_template() {
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}".conf ]; then
+    cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}".conf <<EOF
+RF:
+{
+  FreqCorr = ${OGN_FREQCORR}; # [ppm] "big" R820T sticks have 40-80ppm correction factors, measure it with gsm_scan
+  GSM: # for frequency calibration based on GSM signals
+  {
+    CenterFreq = ${OGN_GSMCENTERFREQ}; # [MHz] find the best GSM frequency with gsm_scan
+    Gain       = ${OGN_GSMGAIN}; # [dB]  RF input gain (beware that GSM signals are very strong !)
+  };
+};
+
+Position:
+{
+  Latitude   = ${OGN_LATITUDE}; # [deg] Antenna coordinates
+  Longitude  = ${OGN_LONGITUDE}; # [deg]
+  Altitude   = ${OGN_ALTITUDE}; # [m] Altitude above sea leavel
+  GeoidSepar = ${OGN_GEOIDSEPAR}; # [m] Geoid separation: FLARM transmits GPS altitude, APRS uses means Sea level altitude
+};
+
+APRS:
+{
+  # Please refer to http://wiki.glidernet.org/receiver-naming-convention
+  Call = "${OGN_CALLSIGN}"; # APRS callsign (max. 9 characters)
+};
+EOF
+  else
+    notice "OGN config found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
   fi
 }
 
@@ -239,7 +282,7 @@ main() {
   install_ogn_pkgs
   create_ogn_fifo
   create_gpu_dev
-  # create_ogn_template
+  create_ogn_template
   # create_ogn_rf_script
   # create_ogn_decode_script
   # create_ogn_rf_cron

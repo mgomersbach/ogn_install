@@ -42,8 +42,5 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v1
 
-      - name: 'Get pwd location'
-        run: pwd
-
       - name: 'Run BATS tests'
         run: sudo /opt/hostedtoolcache/BATS/1.1.0/x64/bin/bats -r tests
