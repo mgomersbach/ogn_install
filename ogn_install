@@ -194,7 +194,7 @@ if [[ ${DEBUG} == "true" ]]; then
 fi
 
 update_system_pkgs() {
-  if [ -z "$SYSTEM_UPDATE" ]; then
+  if [ "$SYSTEM_UPDATE" == "true" ]; then
     apt update && apt upgrade -y
   else
     notice "System updates not set, skipping ${FUNCNAME[0]}"
