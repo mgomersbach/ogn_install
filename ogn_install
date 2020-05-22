@@ -47,6 +47,7 @@ CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
 SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
+DESTRUCTIVE="${DESTRUCTIVE:-}"
 DEBUG="${DEBUG:-}"
 VERBOSE="${VERBOSE:-}"
 help="false"
@@ -148,16 +149,18 @@ Options:
     -d         Output debugging messages
     -h         This
     -n         No colored output
+    -D         Destructive mode, script goes brrrr.
     -v         Enable verbose mode, print script as it is executed
 EOF
 }
 
 # Flag handling
-while getopts 'dhnv' flag; do
+while getopts 'dhnDv' flag; do
   case "${flag}" in
     d) DEBUG="true" ;;
     h) help="true" ;;
     n) NO_COLOR="true" ;;
+    D) DESTRUCTIVE="true" ;;
     v) VERBOSE="true" ;;
     *) error "Unexpected option ${flag}" && usage ;;
   esac
@@ -204,7 +207,7 @@ update_system_pkgs() {
 }
 
 blacklist_dvbt_modules() {
-  if [ ! -L /opt/rtlsdr-ogn ]; then
+  if [ ! -L /opt/rtlsdr-ogn ] || [ ${DESTRUCTIVE} ]; then
     cat >/etc/modprobe.d/blacklist-dvbt.conf <<EOF
 blacklist rtl8192cu
 blacklist rtl8xxxu
@@ -222,7 +225,7 @@ EOF
 }
 
 install_ogn_pkgs() {
-  if [[ ! -L "/opt/rtlsdr-ogn" ]]; then
+  if [[ ! -L "/opt/rtlsdr-ogn" ]] || [ ${DESTRUCTIVE} ]; then
     apt-get install rtl-sdr -y
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
     if vcgencmd measure_temp; then
@@ -268,7 +271,7 @@ create_gpu_dev() {
 }
 
 create_ogn_template() {
-  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}".conf ]; then
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}".conf ] || [ ${DESTRUCTIVE} ]; then
     cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}".conf <<EOF
 RF:
 {
@@ -300,7 +303,7 @@ EOF
 }
 
 create_ogn_rf_script() {
-  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf ]; then
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf ] || [ ${DESTRUCTIVE} ]; then
     cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf <<EOF
 #!/usr/bin/env bash
 
@@ -314,7 +317,7 @@ EOF
 }
 
 create_ogn_decode_script() {
-  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode ]; then
+  if [ ! -f /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode ] || [ ${DESTRUCTIVE} ]; then
     cat >/opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_decode <<EOF
 #!/usr/bin/env bash
 
@@ -328,7 +331,7 @@ EOF
 }
 
 create_ogn_rf_cron() {
-  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ]; then
+  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ] || [ ${DESTRUCTIVE} ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_rf <<EOF
 # RF cronjob for ${OGN_CALLSIGN}
 
@@ -345,7 +348,7 @@ EOF
 }
 
 create_ogn_decode_cron() {
-  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ]; then
+  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ] || [ ${DESTRUCTIVE} ]; then
     cat >/etc/cron.d/"${OGN_CALLSIGN}"_decode <<EOF
 # Decode cronjob for ${OGN_CALLSIGN}
 
@@ -362,7 +365,7 @@ EOF
 }
 
 install_dump1090_fa() {
-  if ! command -v dump1090-fa; then
+  if ! command -v dump1090-fa || [ ${DESTRUCTIVE} ]; then
     if vcgencmd measure_temp; then
       wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.8.1_all.deb -O /tmp/piaware-repository_3.8.1_all.deb
       dpkg -i /tmp/piaware-repository_3.8.1_all.deb
@@ -403,7 +406,7 @@ install_dump1090_fa() {
 }
 
 install_fr24_feed() {
-  if ! grep -q flightradar24 /etc/apt/sources.list; then
+  if ! grep -q flightradar24 /etc/apt/sources.list || [ ${DESTRUCTIVE} ]; then
     apt-key adv --recv-key --keyserver pool.sks-keyservers.net C969F07840C430F5 || apt-key adv --recv-key --keyserver pgp.mit.edu C969F07840C430F5
     mv /etc/apt/sources.list /etc/apt/sources.list.bak
     grep -v flightradar24 /etc/apt/sources.list.bak >/etc/apt/sources.list || true
