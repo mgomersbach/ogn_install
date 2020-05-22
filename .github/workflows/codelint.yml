@@ -42,5 +42,8 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v1
 
+      - name: 'Get BATS location'
+        run: which bats
+
       - name: 'Run BATS tests'
         run: sudo bats -r tests
