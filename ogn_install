@@ -200,7 +200,7 @@ EOF
 }
 
 install_ogn_pkgs() {
-  if [ ! -L /opt/rtlsdr-ogn ]; then
+  if [[ ! -L "/opt/rtlsdr-ogn" ]]; then
     apt-get install rtl-sdr -y
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp -y
     wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin-RPI-GPU-latest.tgz
@@ -218,12 +218,20 @@ create_ogn_fifo() {
   fi
 }
 
+create_gpu_dev() {
+  if [[ ! -c "/dev/gpu_dev" ]]; then
+    mknod /dev/gpu_dev c 100 0
+  else
+    notice "/dev/gpu_dev found, skipping ${FUNCNAME[0]}"
+  fi
+}
+
 main() {
   update_system_pkgs
   blacklist_dvbt_modules
   install_ogn_pkgs
   create_ogn_fifo
-  # create_gpu_dev
+  create_gpu_dev
   # create_ogn_template
   # create_ogn_rf_script
   # create_ogn_decode_script
