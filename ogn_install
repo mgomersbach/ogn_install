@@ -421,7 +421,7 @@ install_fr24_feed() {
         apt update -y
         apt install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y fr24feed
         ;;
-      "amd64")
+      "x86_64")
         wget https://repo-feed.flightradar24.com/linux_x86_64_binaries/fr24feed_1.0.24-5_amd64.tgz -O /tmp/fr24feed.tgz
         tar xvzf /tmp/fr24feed.tgz -C /tmp
         cp /tmp/fr24feed_amd64/fr24feed /usr/bin/fr24feed
