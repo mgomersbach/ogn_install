@@ -379,7 +379,7 @@ install_dump1090_fa() {
       apt install dump1090-fa -y
       rm /tmp/piaware-repository_3.8.1_all.deb
     else
-      apt install libncurses5-dev git librtlsdr-dev debhelper libusb-1.0-0-dev dh-systemd -y
+      apt install libncurses5-dev git lighttpd librtlsdr-dev debhelper libusb-1.0-0-dev dh-systemd -y
       rm -rf /tmp/dump1090 || true
       git clone https://github.com/flightaware/dump1090 /tmp/dump1090
       cd /tmp/dump1090
@@ -388,7 +388,6 @@ install_dump1090_fa() {
       sed -i 's/libbladerf1 (>= 0.2016.06), //' debian/control
       dpkg-buildpackage -b --no-sign
       cd ../
-      apt install lighttpd
       case ${CPU_ARCHITECTURE} in
         "armv6l" | "armv7l")
           dpkg -i dump1090-fa_3.8.1_armhf.deb
