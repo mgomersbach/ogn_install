@@ -412,20 +412,28 @@ install_dump1090_fa() {
 
 install_fr24_feed() {
   if ! grep -q flightradar24 /etc/apt/sources.list || [ ${DESTRUCTIVE} ]; then
-    mv /etc/apt/sources.list /etc/apt/sources.list.bak
-    grep -v flightradar24 /etc/apt/sources.list.bak >/etc/apt/sources.list || true
     case ${CPU_ARCHITECTURE} in
       "armv6l" | "armv7l" | "arm64")
+        mv /etc/apt/sources.list /etc/apt/sources.list.bak
+        grep -v flightradar24 /etc/apt/sources.list.bak >/etc/apt/sources.list || true
         apt-key adv --recv-key --keyserver pool.sks-keyservers.net C969F07840C430F5 || apt-key adv --recv-key --keyserver pgp.mit.edu C969F07840C430F5
         echo 'deb http://repo.feed.flightradar24.com flightradar24 raspberrypi-stable' >>/etc/apt/sources.list
+        apt update -y
+        apt install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y fr24feed
+        ;;
+      "amd64")
+        wget https://repo-feed.flightradar24.com/linux_x86_64_binaries/fr24feed_1.0.24-5_amd64.tgz -O /tmp/fr24feed.tgz
+        tar xvzf /tmp/fr24feed.tgz -C /tmp
+        cp /tmp/fr24feed_amd64/fr24feed /usr/bin/fr24feed
+        rm -rf /tmp/fr24feed_amd64
         ;;
       *)
-        apt-key adv --recv-key --keyserver pool.sks-keyservers.net 97A9DF822081EC2A || apt-key adv --recv-key --keyserver pgp.mit.edu 97A9DF822081EC2A
-        echo 'deb http://repo.feed.flightradar24.com flightradar24 linux-stable' >>/etc/apt/sources.list
+        wget https://repo-feed.flightradar24.com/linux_x86_64_binaries/fr24feed_1.0.24-5_i386.tgz -O /tmp/fr24feed.tgz
+        tar xvzf /tmp/fr24feed.tgz -C /tmp
+        cp /tmp/fr24feed_i386/fr24feed /usr/bin/fr24feed
+        rm -rf /tmp/fr24feed_i386
         ;;
     esac
-    apt update -y
-    apt install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y fr24feed
   else
     notice "flightradar24 feed already installed, skipping ${FUNCNAME[0]}"
   fi
