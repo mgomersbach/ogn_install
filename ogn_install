@@ -388,6 +388,7 @@ install_dump1090_fa() {
       sed -i 's/libbladerf1 (>= 0.2016.06), //' debian/control
       dpkg-buildpackage -b --no-sign
       cd ../
+      apt install lighttpd
       case ${CPU_ARCHITECTURE} in
         "armv6l" | "armv7l")
           dpkg -i dump1090-fa_3.8.1_armhf.deb
