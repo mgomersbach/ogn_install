@@ -40,7 +40,7 @@ OGN_LONGITUDE="${OGN_LONGITUDE:-"+5.123456"}"
 OGN_ALTITUDE="${OGN_ALTITUDE:-"5"}"
 OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
 OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
-OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
+OGN_CRON="${OGN_CRON:-"*/5 * * * * root"}"
 
 # Default vars for this script
 CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
