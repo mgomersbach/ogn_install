@@ -55,7 +55,7 @@ setup() {
 }
 
 @test "Installed FlightRadar24 repo" {
-  run grep -q flightradar24 /etc/apt/sources.list
+  run command -v fr24feed
   [ "$status" -eq 0 ]
 }
 
