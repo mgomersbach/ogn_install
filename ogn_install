@@ -211,7 +211,7 @@ update_system_pkgs() {
 }
 
 blacklist_dvbt_modules() {
-  if [ ! -L /opt/rtlsdr-ogn ] || [ ${DESTRUCTIVE} ]; then
+  if [ ! -f /etc/modprobe.d/blacklist-dvbt.conf ] || [ ${DESTRUCTIVE} ]; then
     cat >/etc/modprobe.d/blacklist-dvbt.conf <<EOF
 blacklist rtl8192cu
 blacklist rtl8xxxu
