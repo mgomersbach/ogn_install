@@ -379,7 +379,7 @@ install_dump1090_fa() {
       apt install dump1090-fa -y
       rm /tmp/piaware-repository_3.8.1_all.deb
     else
-      apt install libncurses5-dev lighttpd git librtlsdr-dev debhelper libusb-1.0-0-dev dh-systemd -y
+      apt install libncurses5-dev git librtlsdr-dev debhelper libusb-1.0-0-dev dh-systemd -y
       rm -rf /tmp/dump1090 || true
       git clone https://github.com/flightaware/dump1090 /tmp/dump1090
       cd /tmp/dump1090
@@ -441,4 +441,5 @@ main() {
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then
   main "${@}"
+  info "Done."
 fi
