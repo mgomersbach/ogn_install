@@ -3,7 +3,7 @@
 load test_helper
 
 setup() {
-  ogn_install -vn
+  ogn_install -n
 }
 
 @test "Created /etc/modprobe.d/blacklist-dvbt.conf" {
@@ -31,7 +31,7 @@ setup() {
 }
 
 @test "Created OGN decode script and is executable" {
-  [ -x /opt/rtlsdr-ogn/testcallsign_rf ]
+  [ -x /opt/rtlsdr-ogn/testcallsign_decode ]
 }
 
 @test "Created OGN rf cron and is executable" {

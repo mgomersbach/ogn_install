@@ -232,7 +232,7 @@ install_ogn_pkgs() {
   if [[ ! -L "/opt/rtlsdr-ogn" ]] || [ ${DESTRUCTIVE} ]; then
     apt-get install rtl-sdr -y
     apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
-    if [[ ${REAL_PI} -gt 0 ]]; then
+    if [[ ${REAL_PI} == 0 ]]; then
       wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
     else
       case ${CPU_ARCHITECTURE} in
@@ -370,7 +370,7 @@ EOF
 
 install_dump1090_fa() {
   if ! command -v dump1090-fa || [ ${DESTRUCTIVE} ]; then
-    if [[ ${REAL_PI} -gt 0 ]]; then
+    if [[ ${REAL_PI} == 0 ]]; then
       wget http://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support/piaware-repository_3.8.1_all.deb -O /tmp/piaware-repository_3.8.1_all.deb
       dpkg -i /tmp/piaware-repository_3.8.1_all.deb
       apt update
