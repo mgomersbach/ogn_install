@@ -4,7 +4,7 @@ test_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PATH="$test_directory/..:$PATH"
 
 # Workaround for Github Ubuntu test env
-apt install libssl1.1=1.1.0g-2ubuntu4.3
+apt install libssl1.0-dev
 
 d() {
   mkdir -p "${1}"

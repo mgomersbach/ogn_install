@@ -1,5 +1,5 @@
 name: 'codelint'
-on: [push,pull_request]
+on: [push, pull_request]
 jobs:
   shfmt:
     name: 'Shell format'
@@ -41,6 +41,9 @@ jobs:
 
       - name: 'Check out code'
         uses: actions/checkout@v1
+
+      - name: 'Update system'
+        run: sudo apt update && sudo apt upgrade -y
 
       - name: 'Run BATS tests'
         run: sudo /opt/hostedtoolcache/BATS/1.1.0/x64/bin/bats -r tests
