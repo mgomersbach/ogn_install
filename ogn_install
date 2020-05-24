@@ -56,6 +56,7 @@ REAL_PI=$(
 SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
 LOG_LEVEL="${LOG_LEVEL:-6}"
 NO_COLOR="${NO_COLOR:-}"
+INTERACTIVE="${INTERACTIVE:-}"
 DESTRUCTIVE="${DESTRUCTIVE:-}"
 DEBUG="${DEBUG:-}"
 VERBOSE="${VERBOSE:-}"
@@ -155,17 +156,19 @@ Usage:
     $0 [options]
 
 Options:
-    -d         Output debugging messages
+    -i         Interactive mode
+    -D         Destructive mode, script goes brrrr.
     -h         This
     -n         No colored output
-    -D         Destructive mode, script goes brrrr.
     -v         Enable verbose mode, print script as it is executed
+    -d         Output debug messages
 EOF
 }
 
 # Flag handling
-while getopts 'dhnDv' flag; do
+while getopts 'idhnDv' flag; do
   case "${flag}" in
+    i) INTERACTIVE="true" ;;
     d) DEBUG="true" ;;
     h) help="true" ;;
     n) NO_COLOR="true" ;;
@@ -385,7 +388,7 @@ create_ogn_rf_script() {
 #!/usr/bin/env bash
 
 cd /opt/rtlsdr-ogn
-/opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
+sudo /opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf
 EOF
     chmod +x /opt/rtlsdr-ogn/"${OGN_CALLSIGN}"_rf
   else
@@ -409,6 +412,8 @@ EOF
 
 create_ogn_rf_service() {
   create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf" "ogn_${OGN_CALLSIGN}_rf" "RF cronjob for ${OGN_CALLSIGN}"
+  gpasswd -a "${OGN_USER}" video
+  echo "${OGN_USER} ALL=(ALL) NOPASSWD: /opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf" >"/etc/sudoers.d/010_${OGN_USER}_${OGN_CALLSIGN}_rf.conf"
 }
 
 create_ogn_decode_service() {
