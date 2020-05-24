@@ -401,18 +401,14 @@ install_dump1090_fa() {
           dpkg -i dump1090-fa_3.8.1_arm64.deb
           ;;
         "x86_64")
-          if lsb_release -d | grep -q "Ubuntu"; then
-            dpkg -i dump1090-fa_3.8.1_amd64.deb || true
-          else
-            dpkg -i dump1090-fa_3.8.1_amd64.deb
-          fi
+          dpkg -i dump1090-fa_3.8.1_amd64.deb
           ;;
         *)
           dpkg -i dump1090-fa_3.8.1_x86.deb
           ;;
       esac
-      popd >/dev/null 2>&1
-      popd >/dev/null 2>&1
+      popd >/dev/null 2>&1 || true
+      popd >/dev/null 2>&1 || notice "nothing on stack"
     fi
   else
     notice "dump1090-fa already installed, skipping ${FUNCNAME[0]}"
