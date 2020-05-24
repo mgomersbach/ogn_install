@@ -217,7 +217,10 @@ update_system_pkgs() {
 
 create_user() {
   local suser=$1
-  if [ "$(id -u "$suser" > /dev/null 2>&1; echo $?)" == 0 ]; then
+  if [ "$(
+    id -u "$suser" >/dev/null 2>&1
+    echo $?
+  )" == 0 ]; then
     useradd -r "$suser" -s /bin/false
     echo "woei"
   else
