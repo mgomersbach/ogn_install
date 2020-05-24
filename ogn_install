@@ -40,13 +40,15 @@ OGN_LONGITUDE="${OGN_LONGITUDE:-"+5.123456"}"
 OGN_ALTITUDE="${OGN_ALTITUDE:-"5"}"
 OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
 OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
-OGN_CRON="${OGN_CRON:-"*/5 * * * * root"}"
+OGN_CRON="${OGN_CRON:-"*/5 * * * *"}"
 
 # Default vars for FR24
 FR24_KEY="${FR24_KEY:-"xxxxxxxxxxxxxxxxxxx"}"
+FR24_USER="${FR24_USER:-"fr24user"}"
 
 # Default vars for this script
 CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
+IS_SYSTEMD=$(if [ -d /run/systemd/system ]; then echo "true"; fi)
 REAL_PI=$(
   bash -c 'command -v vcgencmd > /dev/null 2>&1 && vcgencmd measure_temp > /dev/null 2>&1 && grep -q Raspberry /sys/firmware/devicetree/base/model > /dev/null 2>&1'
   echo $?
@@ -213,6 +215,70 @@ update_system_pkgs() {
   fi
 }
 
+create_user() {
+  local suser=$1
+  if [ "$(id -u "$suser" > /dev/null 2>&1; echo $?)" == 0 ]; then
+    useradd -r "$suser" -s /bin/false
+    echo "woei"
+  else
+    notice "User $suser already exists, skipping ${FUNCNAME[0]}"
+  fi
+}
+
+create_service() {
+  local suser=$1
+  local scommand=$2
+  local sname=$3
+  local sdesc=$4
+  create_user "$suser"
+  if [ "$IS_SYSTEMD" == "true" ]; then
+    if [ ! -f /etc/systemd/system/"${sname}".service ] || [ ${DESTRUCTIVE} ]; then
+      cat >/etc/systemd/system/"${sname}".service <<EOF
+[Unit]
+Description=${sdesc}
+
+[Service]
+User=${suser}
+RuntimeDirectory=${sname}
+Type=simple
+Restart=on-failure
+RestartSec=30
+SyslogIdentifier=${sname}
+LimitCORE=infinity
+ExecStart=${scommand}
+Nice=5
+
+[Install]
+WantedBy=default.target
+EOF
+      systemctl daemon-reload
+      systemctl start "${sname}"
+      systemctl enable "${sname}"
+    else
+      notice "Pre-existing ${sname}.service found, skipping"
+    fi
+  else
+    warning "SystemD not found, falling back to cron with screen"
+    apt install screen
+    if [ ! -f /etc/cron.d/"${sname}" ] || [ ${DESTRUCTIVE} ]; then
+      cat >/etc/cron.d/"${sname}" <<EOF
+# ${sdesc}
+
+${OGN_CRON} ${suser} if [ \$(pgrep ${sname} | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +'\%Y-\%m-\%d \%H:\%M:\%S UTC') ${sname} still works" >> /var/log/${sname}.log 2>&1; else screen -dmS ${sname} ${scommand}; fi
+EOF
+      chmod +x /etc/cron.d/"${sname}"
+      if [ ! -f /var/log/"${sname}".log ]; then
+        mkdir -p "$(dirname "/var/log/${sname}.log")" || true
+        touch /var/log/"${sname}".log || critical "Could not create ${sname} log"
+      fi
+    else
+      notice "${sname} cron found, skipping ${FUNCNAME[0]} for ${sname}"
+    fi
+    notice "Starting cron service"
+    service cron start
+  fi
+}
+
 blacklist_dvbt_modules() {
   if [ ! -f /etc/modprobe.d/blacklist-dvbt.conf ] || [ ${DESTRUCTIVE} ]; then
     mkdir -p /etc/modprobe.d || true
@@ -236,7 +302,7 @@ EOF
 install_ogn_pkgs() {
   if [[ ! -L "/opt/rtlsdr-ogn" ]] || [ ${DESTRUCTIVE} ]; then
     apt-get install rtl-sdr -y
-    apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp screen -y
+    apt-get install libconfig9 libjpeg8 libfftw3-dev lynx ntpdate ntp -y
     if [[ ${REAL_PI} == 0 ]]; then
       wget http://download.glidernet.org/rpi-gpu/rtlsdr-ogn-bin-RPI-GPU-latest.tgz -O /tmp/rtlsdr-ogn-bin.tgz
     else
@@ -261,7 +327,7 @@ install_ogn_pkgs() {
 
 create_ogn_fifo() {
   if [[ ! -p "/opt/rtlsdr-ogn/ogn-rf.fifo" ]]; then
-    sudo mkfifo /opt/rtlsdr-ogn/ogn-rf.fifo
+    mkfifo /opt/rtlsdr-ogn/ogn-rf.fifo
   else
     notice "/opt/rtlsdr-ogn/ogn-rf.fifo found, skipping ${FUNCNAME[0]}"
   fi
@@ -339,38 +405,12 @@ EOF
   fi
 }
 
-create_ogn_rf_cron() {
-  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_rf ] || [ ${DESTRUCTIVE} ]; then
-    cat >/etc/cron.d/"${OGN_CALLSIGN}"_rf <<EOF
-# RF cronjob for ${OGN_CALLSIGN}
-
-${OGN_CRON} if [ \$(pgrep ogn-rf | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +'\%Y-\%m-\%d \%H:\%M:\%S UTC') ogn-rf ${OGN_CALLSIGN} works" >> /var/log/ogn/rf.log 2>&1; else screen -dmS ognrf-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf; fi
-EOF
-    chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_rf
-    if [ ! -f /var/log/ogn/rf.log ]; then
-      mkdir -p "$(dirname "/var/log/ogn/rf.log")" || true
-      touch /var/log/ogn/rf.log || critical "Could not create rf log"
-    fi
-  else
-    notice "OGN rf cron found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
-  fi
+create_ogn_rf_service() {
+  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf" "ogn_${OGN_CALLSIGN}_rf" "RF cronjob for ${OGN_CALLSIGN}"
 }
 
-create_ogn_decode_cron() {
-  if [ ! -f /etc/cron.d/"${OGN_CALLSIGN}"_decode ] || [ ${DESTRUCTIVE} ]; then
-    cat >/etc/cron.d/"${OGN_CALLSIGN}"_decode <<EOF
-# Decode cronjob for ${OGN_CALLSIGN}
-
-${OGN_CRON} if [ \$(pgrep ogn-decode | tr '\n' ' ' | awk '{print \$1}') ]; then echo "\$(date -u +'\%Y-\%m-\%d \%H:\%M:\%S UTC') ogn-decode ${OGN_CALLSIGN} works" >> /var/log/ogn/decode.log 2>&1; else screen -dmS ogndecode-${OGN_CALLSIGN} /opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode; fi
-EOF
-    chmod +x /etc/cron.d/"${OGN_CALLSIGN}"_decode
-    if [ ! -f /var/log/ogn/decode.log ]; then
-      mkdir -p "$(dirname "/var/log/ogn/decode.log")" || true
-      touch /var/log/ogn/decode.log || critical "Could not create decode log"
-    fi
-  else
-    notice "OGN decode cron found, skipping ${FUNCNAME[0]} for callsign ${OGN_CALLSIGN}"
-  fi
+create_ogn_decode_service() {
+  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode" "ogn_${OGN_CALLSIGN}_decode" "Decode cronjob for ${OGN_CALLSIGN}"
 }
 
 install_dump1090_fa() {
@@ -447,23 +487,6 @@ install_fr24_feed() {
 }
 
 setup_fr24_svc() {
-  cat >/etc/systemd/system/fr24feed.service <<EOF
-[Unit]
-Description=Flightradar24 Decoder & Feeder
-After=network-online.target
-
-[Service]
-Type=simple
-Restart=always
-LimitCORE=infinity
-ExecStart=/usr/bin/fr24feed
-PermissionsStartOnly=true
-StandardOutput=null
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
   cat >/etc/fr24feed.ini <<EOF
 bs="no"
 fr24key="${FR24_KEY}"
@@ -477,9 +500,7 @@ receiver="beast-tcp"
 windowmode="0"
 EOF
 
-  systemctl daemon-reload
-  systemctl start fr24feed
-  systemctl enable fr24feed
+  create_service "${FR24_USER}" "/usr/bin/fr24feed" "fr24feed" "Flightradar24 Decoder & Feeder"
 }
 
 main() {
@@ -491,11 +512,11 @@ main() {
   create_ogn_template
   create_ogn_rf_script
   create_ogn_decode_script
-  create_ogn_rf_cron
-  create_ogn_decode_cron
+  create_ogn_rf_service
+  create_ogn_decode_service
   install_dump1090_fa
   install_fr24_feed
-  setup_fr24_svc
+  create_fr24_service
 }
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then
