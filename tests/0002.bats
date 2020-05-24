@@ -6,8 +6,7 @@ setup() {
   ogn_install -n
 }
 
-@test "Created /etc/modprobe.d/blacklist-dvbt.conf" {
-  skip
+@test "Created DVBT blacklist" {
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
 

@@ -476,6 +476,10 @@ raw="no"
 receiver="beast-tcp"
 windowmode="0"
 EOF
+
+  systemctl daemon-reload
+  systemctl start fr24feed
+  systemctl enable fr24feed
 }
 
 main() {
