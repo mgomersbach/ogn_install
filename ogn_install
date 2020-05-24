@@ -220,9 +220,8 @@ create_user() {
   if [ "$(
     id -u "$suser" >/dev/null 2>&1
     echo $?
-  )" == 0 ]; then
+  )" != 0 ]; then
     useradd -r "$suser" -s /bin/false
-    echo "woei"
   else
     notice "User $suser already exists, skipping ${FUNCNAME[0]}"
   fi
