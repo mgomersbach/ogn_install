@@ -42,6 +42,9 @@ OGN_GEOIDSEPAR="${OGN_GEOIDSEPAR:-"50"}"
 OGN_CALLSIGN="${OGN_CALLSIGN:-"testcallsign"}"
 OGN_CRON="${OGN_CRON:-"*/5 * * * * root"}"
 
+# Default vars for FR24
+FR24_KEY="${FR24_KEY:-"xxxxxxxxxxxxxxxxxxx"}"
+
 # Default vars for this script
 CPU_ARCHITECTURE=$(uname -m | tr -d "\n\r")
 REAL_PI=$(
@@ -439,8 +442,40 @@ install_fr24_feed() {
         ;;
     esac
   else
-    notice "flightradar24 feed already installed, skipping ${FUNCNAME[0]}"
+    notice "FlightRadar24 feed already installed, skipping ${FUNCNAME[0]}"
   fi
+}
+
+setup_fr24_svc() {
+  cat >/etc/systemd/system/fr24feed.service <<EOF
+[Unit]
+Description=Flightradar24 Decoder & Feeder
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+LimitCORE=infinity
+ExecStart=/usr/bin/fr24feed
+PermissionsStartOnly=true
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  cat >/etc/fr24feed.ini <<EOF
+bs="no"
+fr24key="${FR24_KEY}"
+host="127.0.0.1:30005"
+logmode="0"
+mlat-without-gps="yes"
+mlat="yes"
+mpx="no"
+raw="no"
+receiver="beast-tcp"
+windowmode="0"
+EOF
 }
 
 main() {
@@ -456,7 +491,7 @@ main() {
   create_ogn_decode_cron
   install_dump1090_fa
   install_fr24_feed
-  # setup_fr24_svc
+  setup_fr24_svc
 }
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then

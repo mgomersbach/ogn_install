@@ -7,6 +7,7 @@ setup() {
 }
 
 @test "Created /etc/modprobe.d/blacklist-dvbt.conf" {
+  skip
   [ -f /etc/modprobe.d/blacklist-dvbt.conf ]
 }
 
