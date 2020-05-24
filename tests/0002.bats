@@ -34,20 +34,38 @@ setup() {
   [ -x /opt/rtlsdr-ogn/testcallsign_decode ]
 }
 
-@test "Created OGN rf cron and is executable" {
-  [ -x /etc/cron.d/testcallsign_rf ]
+@test "Created OGN RF service" {
+  if [ "$IS_SYSTEMD" == "true" ]; then
+    run systemctl is-enabled ogn_testcallsign_rf
+    [ "$status" -eq 0 ]
+  else
+    [ -x /etc/cron.d/ogn_testcallsign_rf ]
+  fi
 }
 
-@test "Created OGN decode cron and is executable" {
-  [ -x /etc/cron.d/testcallsign_decode ]
+@test "Created OGN decode service" {
+  if [ "$IS_SYSTEMD" == "true" ]; then
+    run systemctl is-enabled ogn_testcallsign_decode
+    [ "$status" -eq 0 ]
+  else
+    [ -x /etc/cron.d/testcallsign_decode ]
+  fi
 }
 
 @test "Created OGN rf log" {
-  [ -f /var/log/ogn/rf.log ]
+  if [ "$IS_SYSTEMD" == "true" ]; then
+    skip
+  else
+    [ -f /var/log/ogn_testcallsign_rf.log ]
+  fi
 }
 
 @test "Created OGN decode log" {
-  [ -f /var/log/ogn/decode.log ]
+  if [ "$IS_SYSTEMD" == "true" ]; then
+    skip
+  else
+    [ -f /var/log/ogn_testcallsign_decode.log ]
+  fi
 }
 
 @test "Installed dump1090-fa pkgs" {
