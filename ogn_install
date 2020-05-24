@@ -401,7 +401,11 @@ install_dump1090_fa() {
           dpkg -i dump1090-fa_3.8.1_arm64.deb
           ;;
         "x86_64")
-          dpkg -i dump1090-fa_3.8.1_amd64.deb
+          if lsb_release -d | grep -q "Ubuntu 16"; then
+            dpkg -i dump1090-fa_3.8.1_amd64.deb || true
+          else
+            dpkg -i dump1090-fa_3.8.1_amd64.deb
+          fi
           ;;
         *)
           dpkg -i dump1090-fa_3.8.1_x86.deb
