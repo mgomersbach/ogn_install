@@ -53,19 +53,34 @@ REAL_PI=$(
   bash -c 'command -v vcgencmd > /dev/null 2>&1 && vcgencmd measure_temp > /dev/null 2>&1 && grep -q Raspberry /sys/firmware/devicetree/base/model > /dev/null 2>&1'
   echo $?
 )
-SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
-LOG_LEVEL="${LOG_LEVEL:-6}"
-NO_COLOR="${NO_COLOR:-}"
-INTERACTIVE="${INTERACTIVE:-}"
-DESTRUCTIVE="${DESTRUCTIVE:-}"
-DEBUG="${DEBUG:-}"
-VERBOSE="${VERBOSE:-}"
-help="false"
-
 KERNEL=$(uname -r)
 KERNEL_VERSION=$(echo "${KERNEL}" | cut -d \. -f 1)$(echo "${KERNEL}" | cut -d \. -f 2)
+LOG_LEVEL="${LOG_LEVEL:-6}"
+IS_TERMINAL="${IS_TERMINAL:-$(if [ -t 0 ]; then echo "true"; fi)}"
+SESSION_TYPE="${SESSION_TYPE:-$(if [ "$(command -v loginctl)" ] && [ -n "${XDG_SESSION_ID:-}" ]; then loginctl show-session "$XDG_SESSION_ID" -p Type | rev | cut -d= -f1 | rev; else echo "none"; fi)}"
+INTERACTIVE="${INTERACTIVE:-}"
+INTERFACE="${INTERFACE:-}"
+DESTRUCTIVE="${DESTRUCTIVE:-}"
+NO_COLOR="${NO_COLOR:-}"
+DEBUG="${DEBUG:-}"
+VERBOSE="${VERBOSE:-}"
+SYSTEM_UPDATE="${SYSTEM_UPDATE:-}"
+help="false"
 
-function __log() {
+yesno() {
+  local question=$1
+  result="invalid"
+  while [[ $result == "invalid" ]]; do
+    read -rp "${question} (y/n)?" choice
+    case "$choice" in
+      y | Y) result="yes" ;;
+      n | N) result="no" ;;
+      *) result="invalid" ;;
+    esac
+  done
+}
+
+__log() {
   local log_level="${1}"
   shift
 
@@ -103,42 +118,42 @@ function __log() {
   done <<<"${@:-}"
 }
 
-function emergency() {
+emergency() {
   __log emergency "${@}"
   exit 1
 }
 
-function alert() {
+alert() {
   [[ ${LOG_LEVEL:-0} -ge 1 ]] && __log alert "${@}"
   true
 }
 
-function critical() {
+critical() {
   [[ ${LOG_LEVEL:-0} -ge 2 ]] && __log critical "${@}"
   true
 }
 
-function error() {
+error() {
   [[ ${LOG_LEVEL:-0} -ge 3 ]] && __log error "${@}"
   true
 }
 
-function warning() {
+warning() {
   [[ ${LOG_LEVEL:-0} -ge 4 ]] && __log warning "${@}"
   true
 }
 
-function notice() {
+notice() {
   [[ ${LOG_LEVEL:-0} -ge 5 ]] && __log notice "${@}"
   true
 }
 
-function info() {
+info() {
   [[ ${LOG_LEVEL:-0} -ge 6 ]] && __log info "${@}"
   true
 }
 
-function debug() {
+debug() {
   [[ ${LOG_LEVEL:-0} -ge 7 ]] && __log debug "${@}"
   true
 }
@@ -224,7 +239,7 @@ create_user() {
     id -u "$suser" >/dev/null 2>&1
     echo $?
   )" != 0 ]; then
-    useradd -r "$suser" -s /bin/false
+    useradd -M -r "$suser" -s /bin/false
   else
     notice "User $suser already exists, skipping ${FUNCNAME[0]}"
   fi
@@ -464,6 +479,12 @@ install_dump1090_fa() {
 
 install_fr24_feed() {
   if ! command -v fr24feed || [ ${DESTRUCTIVE} ]; then
+    if [ ${DESTRUCTIVE} ]; then
+      systemctl stop fr24feed || true
+      service stop fr24feed || true
+      rm /etc/cron.d/fr24feed || true
+      killall fr24feed || true
+    fi
     case ${CPU_ARCHITECTURE} in
       "armv6l" | "armv7l" | "arm64")
         if ! grep -q flightradar24 /etc/apt/sources.list; then
@@ -511,19 +532,30 @@ EOF
 }
 
 main() {
-  update_system_pkgs
-  blacklist_dvbt_modules
-  install_ogn_pkgs
-  create_ogn_fifo
-  create_gpu_dev
-  create_ogn_template
-  create_ogn_rf_script
-  create_ogn_decode_script
-  create_ogn_rf_service
-  create_ogn_decode_service
-  install_dump1090_fa
-  install_fr24_feed
-  setup_fr24_svc
+  steps=(
+    update_system_pkgs
+    blacklist_dvbt_modules
+    install_ogn_pkgs
+    create_ogn_fifo
+    create_gpu_dev
+    create_ogn_template
+    create_ogn_rf_script
+    create_ogn_decode_script
+    create_ogn_rf_service
+    create_ogn_decode_service
+    install_dump1090_fa
+    install_fr24_feed
+    setup_fr24_svc
+  )
+  for step in "${steps[@]}"; do
+    if [ "${INTERACTIVE}" == "true" ]; then
+      if [ "$(yesno "$step")" == "yes" ]; then
+        $step
+      fi
+    else
+      $step
+    fi
+  done
 }
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then
