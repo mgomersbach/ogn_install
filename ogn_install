@@ -519,7 +519,7 @@ main() {
   create_ogn_decode_service
   install_dump1090_fa
   install_fr24_feed
-  create_fr24_service
+  setup_fr24_svc
 }
 
 if [[ $0 == "${BASH_SOURCE[*]}" ]]; then
