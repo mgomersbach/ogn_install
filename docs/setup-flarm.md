@@ -5,7 +5,7 @@ I'll also create a script to do these things.
 
 ## What
 
-Get Raspberry Pi up and running with Raspbian as Operating System, RTL-SDR dongle as signal receiver and OGN, FR24 and FlightAware as output (The latter two giving you entprise/pro account for their services)
+Get Raspberry Pi up and running with Raspbian as Operating System, RTL-SDR dongle as signal receiver and OGN, FR24 and FlightAware as output (The latter two giving you enterprise/pro account for their services)
 
 ## How
 
