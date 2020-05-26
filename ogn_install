@@ -426,13 +426,13 @@ EOF
 }
 
 create_ogn_rf_service() {
-  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf" "ogn_${OGN_CALLSIGN}_rf" "RF cronjob for ${OGN_CALLSIGN}"
+  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_rf" "ogn_${OGN_CALLSIGN}_rf" "RF service for ${OGN_CALLSIGN}"
   gpasswd -a "${OGN_USER}" video
   echo "${OGN_USER} ALL=(ALL) NOPASSWD: /opt/rtlsdr-ogn/ogn-rf /opt/rtlsdr-ogn/${OGN_CALLSIGN}.conf" >"/etc/sudoers.d/010_${OGN_USER}_${OGN_CALLSIGN}_rf.conf"
 }
 
 create_ogn_decode_service() {
-  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode" "ogn_${OGN_CALLSIGN}_decode" "Decode cronjob for ${OGN_CALLSIGN}"
+  create_service "${OGN_USER}" "/opt/rtlsdr-ogn/${OGN_CALLSIGN}_decode" "ogn_${OGN_CALLSIGN}_decode" "Decode service for ${OGN_CALLSIGN}"
 }
 
 install_dump1090_fa() {
